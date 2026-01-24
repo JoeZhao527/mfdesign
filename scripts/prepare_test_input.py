@@ -38,7 +38,7 @@ def process_yaml(input_path: Path, output_dir: Path, mode: str):
                 # For fold mode, set spec_mask to all zeros
                 if mode == 'fold' and 'spec_mask' in seq_data:
                     seq_len = len(seq_data['sequence'])
-                    seq_data['spec_mask'] = '0' * seq_len
+                    seq_data['spec_mask'] = '1' * seq_len
     
     # Create output directory if needed
     mode_output_dir = output_dir / mode
