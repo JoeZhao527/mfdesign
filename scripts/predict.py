@@ -482,8 +482,8 @@ def process_inputs(  # noqa: C901, PLR0912, PLR0915
 
 def check_checkpoint(pretrained: Path, checkpoint: Path) -> None: 
 
-    pretrained_dict = torch.load(pretrained, map_location="cpu")
-    checkpoint_dict = torch.load(checkpoint, map_location="cpu")
+    pretrained_dict = torch.load(pretrained, map_location="cpu", weights_only=False)
+    checkpoint_dict = torch.load(checkpoint, map_location="cpu", weights_only=False)
 
     is_change = False
     # Remove the unused parameters

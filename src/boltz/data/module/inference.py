@@ -203,9 +203,17 @@ class PredictionDataset(torch.utils.data.Dataset):
                         np.zeros(tokenized.tokens[i]["atom_num"] - len(token_atoms), dtype=token_atoms.dtype)])
                     coord_data.append(np.array([token_atoms["coords"]]))
                     resolved_mask.append(token_atoms["is_present"])
-                    if seq_mask[i]:
+                    # Use spec_mask to determine inpaint region:
+                    # spec_mask=True (1) -> inpaint this residue (coord_mask=True)
+                    # spec_mask=False (0) -> keep GT coordinates (coord_mask=False, except for missing atoms)
+                    if spec_token_mask[i]:
+                        # spec_mask=1: inpaint this residue
+                        coord_mask.append(np.ones_like(token_atoms["is_present"], dtype=bool))
+                    elif seq_mask[i]:
+                        # CDR region with "X" in sequence: also inpaint
                         coord_mask.append(np.ones_like(token_atoms["is_present"], dtype=bool))
                     else:
+                        # Non-inpaint region: only inpaint missing atoms
                         coord_mask.append(1 - token_atoms["is_present"])
                 
                 resolved_mask = from_numpy(np.concatenate(resolved_mask))
