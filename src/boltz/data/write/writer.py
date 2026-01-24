@@ -129,8 +129,14 @@ class BoltzWriter(BasePredictionWriter):
             seqs = [""] * len(records)
 
         # Get ranking
-        argsort = torch.argsort(prediction["confidence_score"], descending=True)
-        idx_to_rank = {idx.item(): rank for rank, idx in enumerate(argsort)}
+        # Update to allow boltz
+        if "confidence_score" in prediction:
+            argsort = torch.argsort(prediction["confidence_score"], descending=True)
+            idx_to_rank = {idx.item(): rank for rank, idx in enumerate(argsort)}
+        else:
+            # No confidence score, use original order
+            num_models = coords.shape[1]
+            idx_to_rank = {i: i for i in range(num_models)}
 
         seqs_info = {}
         if self.seq_info_path is not None:
