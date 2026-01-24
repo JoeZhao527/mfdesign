@@ -21,4 +21,10 @@ data_dir=$1
 # data/structure/inpaint
 # data/structure/fold
 # Run inpaint
-python scripts/predict.py --data ${data_dir} --processed_msa_dir data/msa
+python scripts/predict.py \
+    --data ${data_dir} \
+    --processed_msa_dir data/msa \
+    --checkpoint ./model/boltz1.ckpt \
+    --only_structure_prediction \
+    --structure_inpainting
+
