@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=inpaint
-#SBATCH --output=logs/inpaint.log
+#SBATCH --job-name=fold
+#SBATCH --output=logs/fold.log
 #SBATCH --chdir=/hai/scratch/fangwu97/mfdesign
 #SBATCH --cpus-per-task=30        # Number of CPU cores per task
 #SBATCH --mem=628G                # Total memory per node (or job), e.g. 16G, 3200M
@@ -18,12 +18,10 @@ conda activate $CONDA/envs/mfdesign
 
 export PYTHONPATH=$CONDA/envs/mfdesign/bin/python
 
-
-# Run inpaint
+# Run fold
 python scripts/predict.py \
-    --data data/structure/inpaint \
+    --data data/structure/fold \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
-    --only_structure_prediction \
-    --structure_inpainting
+    --only_structure_prediction
 
