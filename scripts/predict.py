@@ -693,7 +693,7 @@ def predict(
         predict_args=predict_args,
         structure_prediction_training=False,
         sequence_prediction_training=sequence_prediction,
-        confidence_prediction=True,
+        confidence_prediction=False, # Update to False to allow boltz
         confidence_imitate_trunk=True,
         structure_inpainting=structure_inpainting,
         inpaint_mode=inpaint_mode,
