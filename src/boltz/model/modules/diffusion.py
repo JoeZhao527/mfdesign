@@ -550,8 +550,23 @@ class AtomDiffusion(Module):
         multiplicity=1,
         train_accumulate_token_repr=False,
         inpaint=False,
+        inpaint_mode="replace",  # "replace" or "noise_condition"
         **network_condition_kwargs,
     ):
+        """Sample structures using diffusion.
+        
+        Args:
+            atom_mask: Mask for valid atoms
+            num_sampling_steps: Number of denoising steps
+            multiplicity: Number of samples to generate
+            train_accumulate_token_repr: Whether to accumulate token representations
+            inpaint: Whether to do structure inpainting
+            inpaint_mode: Inpainting mode
+                - "replace": After denoising, replace non-inpaint regions with GT (original behavior)
+                - "noise_condition": At each timestep, non-inpaint regions use GT + sigma*noise,
+                                    inpaint regions use denoised result from previous step
+            **network_condition_kwargs: Additional network condition arguments
+        """
         num_sampling_steps = default(num_sampling_steps, self.num_sampling_steps)
         resolved_atom_mask = network_condition_kwargs["feats"]["atom_resolved_mask"].repeat_interleave(multiplicity, 0)
         atom_mask = atom_mask.repeat_interleave(multiplicity, 0)
@@ -565,7 +580,6 @@ class AtomDiffusion(Module):
 
         # atom position is noise at the beginning
         init_sigma = sigmas[0]
-        atom_coords = init_sigma * torch.randn(shape, device=self.device)
         atom_coords_denoised = None
         seq_logits_denoised = None
         model_cache = {} if self.use_inference_model_cache else None
@@ -577,9 +591,29 @@ class AtomDiffusion(Module):
         if inpaint:
             coords_gt = network_condition_kwargs["feats"]["coords_gt"][0].repeat_interleave(multiplicity, 0)
             coords_mask = network_condition_kwargs["feats"]["coord_mask"].repeat_interleave(multiplicity, 0)
+            # coords_mask: True = inpaint region (generate from noise), False = non-inpaint region (use GT)
+            
+            if inpaint_mode == "noise_condition":
+                # For noise_condition mode:
+                # - inpaint region (coords_mask=True): pure noise
+                # - non-inpaint region (coords_mask=False): GT + sigma * noise
+                # First, align GT to the current coordinate frame
+                coords_gt_centered = coords_gt - (coords_gt * resolved_atom_mask[..., None].float()).sum(dim=1, keepdim=True) / resolved_atom_mask.sum(dim=1, keepdim=True).clamp(min=1)
+                
+                noise = torch.randn(shape, device=self.device)
+                # inpaint region: pure noise; non-inpaint region: GT + noise
+                atom_coords = torch.where(
+                    coords_mask[..., None].bool(),
+                    init_sigma * noise,  # inpaint region: pure noise
+                    coords_gt_centered + init_sigma * noise  # non-inpaint region: GT + noise
+                )
+            else:
+                # Original behavior: start from pure noise everywhere
+                atom_coords = init_sigma * torch.randn(shape, device=self.device)
         else:
             coords_gt = None
             coords_mask = None
+            atom_coords = init_sigma * torch.randn(shape, device=self.device)
 
         network_condition_kwargs["s_inputs"] = network_condition_kwargs["s_inputs"].repeat_interleave(multiplicity, 0)
         network_condition_kwargs["feats"]["masked_seq"] = network_condition_kwargs["feats"]["masked_seq"].repeat_interleave(multiplicity, 0)
@@ -700,16 +734,20 @@ class AtomDiffusion(Module):
                     )
 
             if inpaint:
-                with torch.autocast("cuda", enabled=False):
-                    atom_coords_gt = weighted_rigid_align(
-                        coords_gt.float(),
-                        atom_coords_denoised.float(),
-                        atom_mask.float(),
-                        mask=resolved_atom_mask.float(),
-                    )
-                
-                atom_coords_gt = atom_coords_gt.to(atom_coords_denoised)
-                atom_coords_denoised = torch.where(coords_mask[..., None].bool(), atom_coords_denoised, atom_coords_gt)
+                if inpaint_mode == "replace":
+                    # Original behavior: replace non-inpaint regions with aligned GT after denoising
+                    with torch.autocast("cuda", enabled=False):
+                        atom_coords_gt = weighted_rigid_align(
+                            coords_gt.float(),
+                            atom_coords_denoised.float(),
+                            atom_mask.float(),
+                            mask=resolved_atom_mask.float(),
+                        )
+                    
+                    atom_coords_gt = atom_coords_gt.to(atom_coords_denoised)
+                    atom_coords_denoised = torch.where(coords_mask[..., None].bool(), atom_coords_denoised, atom_coords_gt)
+                # For noise_condition mode, we don't modify atom_coords_denoised here
+                # The mixing happens when computing atom_coords_next below
 
             if self.alignment_reverse_diff:
                 with torch.autocast("cuda", enabled=False):
@@ -728,6 +766,31 @@ class AtomDiffusion(Module):
                 + self.step_scale * (sigma_t - t_hat) * denoised_over_sigma
             )
 
+            # For noise_condition inpainting mode:
+            # - inpaint region: use the denoised result from this step (atom_coords_next)
+            # - non-inpaint region: use GT + sigma_t * noise for next timestep
+            if inpaint and inpaint_mode == "noise_condition":
+                with torch.autocast("cuda", enabled=False):
+                    # Align GT to current denoised structure
+                    atom_coords_gt_aligned = weighted_rigid_align(
+                        coords_gt.float(),
+                        atom_coords_denoised.float(),
+                        atom_mask.float(),
+                        mask=resolved_atom_mask.float(),
+                    )
+                atom_coords_gt_aligned = atom_coords_gt_aligned.to(atom_coords_next)
+                
+                # For non-inpaint regions, add noise corresponding to sigma_t
+                noise_for_gt = sigma_t * torch.randn_like(atom_coords_gt_aligned)
+                gt_noised = atom_coords_gt_aligned + noise_for_gt
+                
+                # Combine: inpaint region uses denoised result, non-inpaint region uses GT + noise
+                atom_coords_next = torch.where(
+                    coords_mask[..., None].bool(),
+                    atom_coords_next,  # inpaint region: use denoised result
+                    gt_noised  # non-inpaint region: GT + sigma_t * noise
+                )
+
             atom_coords = atom_coords_next
 
         if self.sequence_train:
@@ -736,6 +799,7 @@ class AtomDiffusion(Module):
         else:
             seqs_denoised = None
         
+        # Final processing: ensure non-inpaint regions have clean GT coordinates
         if inpaint:
             with torch.autocast("cuda", enabled=False):
                 atom_coords_gt = weighted_rigid_align(

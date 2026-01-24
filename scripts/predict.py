@@ -514,6 +514,7 @@ def predict(
     msa_dir: Optional[str] = None,
     processed_msa_dir: Optional[str] = None,
     structure_inpainting: bool = False,
+    inpaint_mode: str = "replace",
     ground_truth_structure_dir: Optional[str] = None,
     cache: str = "~/.boltz",
     checkpoint: Optional[str] = None,
@@ -694,6 +695,7 @@ def predict(
         confidence_prediction=True,
         confidence_imitate_trunk=True,
         structure_inpainting=structure_inpainting,
+        inpaint_mode=inpaint_mode,
         alpha_pae=1.0,
         map_location="cpu",
         diffusion_process_args=asdict(diffusion_params),
@@ -837,6 +839,16 @@ def run():
     )
 
     parser.add_argument(
+        "--inpaint_mode",
+        type=str,
+        choices=["replace", "noise_condition"],
+        default="replace",
+        help="Inpainting mode. 'replace': replace non-inpaint regions with GT after denoising. "
+             "'noise_condition': at each timestep, non-inpaint regions use GT + sigma*noise as input, "
+             "inpaint regions use denoised result from previous step.",
+    )
+
+    parser.add_argument(
         "--ground_truth_structure_dir",
         type=str,
         default="./data/antibody_data/structures",
@@ -892,6 +904,7 @@ def run():
         preprocessed_data_path=args.preprocessed_data_path,
         ground_truth_structure_dir=args.ground_truth_structure_dir,
         structure_inpainting=args.structure_inpainting,
+        inpaint_mode=args.inpaint_mode,
         noise_type=args.noise_type,
         sequence_prediction=args.only_structure_prediction,
         use_epitope=args.no_epitope

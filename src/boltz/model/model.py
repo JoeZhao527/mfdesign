@@ -60,6 +60,7 @@ class Boltz1(LightningModule):
         confidence_imitate_trunk: bool = False,
         alpha_pae: float = 0.0,
         structure_inpainting: bool = False,
+        inpaint_mode: str = "replace",  # "replace" or "noise_condition"
         structure_prediction_training: bool = True,
         atoms_per_window_queries: int = 32,
         atoms_per_window_keys: int = 128,
@@ -234,6 +235,7 @@ class Boltz1(LightningModule):
         self.alpha_pae = alpha_pae
 
         self.structure_inpainting = structure_inpainting
+        self.inpaint_mode = inpaint_mode
         self.structure_prediction_training = structure_prediction_training
         self.confidence_imitate_trunk = confidence_imitate_trunk
         if self.confidence_prediction:
@@ -371,6 +373,7 @@ class Boltz1(LightningModule):
                     multiplicity=diffusion_samples,
                     train_accumulate_token_repr=self.training,
                     inpaint=self.structure_inpainting,
+                    inpaint_mode=self.inpaint_mode,
                 )
             )
 
