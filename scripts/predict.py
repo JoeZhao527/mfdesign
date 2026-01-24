@@ -487,10 +487,11 @@ def check_checkpoint(pretrained: Path, checkpoint: Path) -> None:
 
     is_change = False
     # Remove the unused parameters
-    for k, v in checkpoint_dict["hyper_parameters"]["score_model_args"]["sequence_model_args"].items():
-        if k not in {"hidden_dim", "vocab_size", "dropout"}:
-            is_change = True
-            del checkpoint_dict["hyper_parameters"]["score_model_args"]["sequence_model_args"][k]
+    if "sequence_model_args" in checkpoint_dict["hyper_parameters"]["score_model_args"]:
+        for k, v in checkpoint_dict["hyper_parameters"]["score_model_args"]["sequence_model_args"].items():
+            if k not in {"hidden_dim", "vocab_size", "dropout"}:
+                is_change = True
+                del checkpoint_dict["hyper_parameters"]["score_model_args"]["sequence_model_args"][k]
     
     # If use self trained checkpoint, it is necessary to manually add confidence_module for inference.
     module_params = {
