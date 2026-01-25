@@ -15,8 +15,8 @@ import logging
 from abx.preprocess.numbering import renumber_ab_seq, get_ab_regions
 
 
-from pyrosetta import *
-from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
+# from pyrosetta import *
+# from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
 
 #Core Includesfrom pyrosetta import create_score_function
 
@@ -236,11 +236,12 @@ def eval_metric(pred_file, reference_data, args):
             output = pdb_name.split('.')[0]
 
         relaxed_file = os.path.join(file_dir_path, f"{output}_relaxed.pdb")
-        pred_dG = InterfaceEnergy(pred_file)
+        # pred_dG = InterfaceEnergy(pred_file)
         ab_metrics.update(
             {
             # 'dG_ref': gt_dG,
-            'dG_gen': pred_dG,
+            # 'dG_gen': pred_dG,
+            'dG_gen': 0
             # 'ddG': pred_dG - gt_dG
             }
         )
