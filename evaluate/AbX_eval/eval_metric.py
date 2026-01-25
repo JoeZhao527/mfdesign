@@ -156,7 +156,7 @@ def get_ref_files_list(dir_path, suffix="_reference.pdb"):
     ref_files_path_list = []
     pdb_files_name_list = []
     for filename in os.listdir(dir_path):
-        print(filename)
+        # print(filename)
         if filename.endswith(suffix):
             fpath = os.path.join(dir_path, filename)
             ref_files_path_list.append(fpath)
@@ -231,7 +231,7 @@ def main(args):
     # print(predict_pdb_fpath_list)
     # print('____________')
     # print(pred_pdb_name_list)
-    print(ref_pdb_files_list)
+    # print(ref_pdb_files_list)
     
     # # Filtering for antibody or nanobody
     with open(args.test_json_fpath, 'r') as f:
@@ -295,8 +295,6 @@ def main(args):
 
     # Average Results for each Metric
     results = [r for r in results if r is not None]
-    print(results[0])
-    exit(0)
     df = pd.DataFrame(results)
     print(df)
     
