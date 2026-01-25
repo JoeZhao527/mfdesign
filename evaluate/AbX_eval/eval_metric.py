@@ -228,17 +228,23 @@ def main(args):
     elif args.model == 'rfab':
         predict_pdb_fpath_list, pred_pdb_name_list = get_rfab_files_list(args.data_dir)
         ref_pdb_files_list, ref_pdb_name_list = get_ref_files_list(args.ref_dir)
-    # print(predict_pdb_fpath_list)
-    # print('____________')
-    # print(pred_pdb_name_list)
-    # print(ref_pdb_files_list)
+    print(f"[DEBUG] Found {len(predict_pdb_fpath_list)} prediction files")
+    print(f"[DEBUG] Found {len(ref_pdb_files_list)} reference files")
+    if len(predict_pdb_fpath_list) > 0:
+        print(f"[DEBUG] First pred file: {predict_pdb_fpath_list[0]}")
+        print(f"[DEBUG] First pred name: {pred_pdb_name_list[0]}")
     
     # # Filtering for antibody or nanobody
     with open(args.test_json_fpath, 'r') as f:
         test_pdb_name_list = json.load(f)  
+    
+    print(f"[DEBUG] test_json has {len(test_pdb_name_list)} entries")
+    if len(test_pdb_name_list) > 0:
+        print(f"[DEBUG] First test entry: {test_pdb_name_list[0]}")
         
     test_pdb_name_set = set(test_pdb_name_list)
     filtered_predict = [(f, n) for f, n in zip(predict_pdb_fpath_list, pred_pdb_name_list) if n in test_pdb_name_set]
+    print(f"[DEBUG] After filtering: {len(filtered_predict)} files match")
     predict_pdb_fpath_list, pred_pdb_name_list = zip(*filtered_predict) if filtered_predict else ([], [])
 
     # print(ref_pdb_files_list)
@@ -294,7 +300,13 @@ def main(args):
     #     #     continue
 
     # Average Results for each Metric
+    print(f"[DEBUG] Raw results count: {len(results)}")
+    none_count = sum(1 for r in results if r is None)
+    print(f"[DEBUG] None results: {none_count}")
     results = [r for r in results if r is not None]
+    print(f"[DEBUG] Valid results: {len(results)}")
+    if len(results) > 0:
+        print(f"[DEBUG] First result keys: {results[0].keys()}")
     df = pd.DataFrame(results)
     print(df)
     
