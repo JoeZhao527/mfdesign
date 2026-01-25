@@ -4,4 +4,5 @@ python evaluate/AbX_eval/eval_metric.py \
     --test_yaml_dir data/test_yaml_dir/ab \
     -test_json_fpath data/test_entry.json \
     --model boltz \
-    -c 8
+    --suffix _model_0.pdb \
+    -c 8 

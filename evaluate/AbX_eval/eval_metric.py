@@ -221,7 +221,7 @@ def main(args):
         ref_pdb_files_list, ref_pdb_name_list = get_dymean_ref_files_list(args.dymean_ref_dir)
     elif args.model == 'boltz':
         predict_pdb_fpath_list, pred_pdb_name_list = get_boltz_files_list(args.data_dir, suffix=args.suffix)
-        ref_pdb_files_list, ref_pdb_name_list = get_ref_files_list(args.ref_dir)
+        ref_pdb_files_list, ref_pdb_name_list = get_ref_files_list(args.ref_dir, suffix=".pdb")
     elif args.model == 'iggm':
         predict_pdb_fpath_list, pred_pdb_name_list = get_iggm_files_list(args.data_dir)
         ref_pdb_files_list, ref_pdb_name_list = get_ref_files_list(args.ref_dir)
