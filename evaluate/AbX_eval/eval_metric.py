@@ -295,6 +295,8 @@ def main(args):
 
     # Average Results for each Metric
     results = [r for r in results if r is not None]
+    print(results[0])
+    exit(0)
     df = pd.DataFrame(results)
     print(df)
     
