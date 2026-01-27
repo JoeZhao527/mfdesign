@@ -18,10 +18,14 @@ conda activate $CONDA/envs/mfdesign
 
 export PYTHONPATH=$CONDA/envs/mfdesign/bin/python
 
+# Get data directory from command line argument
+DATA_DIR=$1
+
 # Run fold
 python scripts/predict.py \
-    --data data/structure/fold \
+    --data $DATA_DIR \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
+    --out_dir ./output/fold \
     --only_structure_prediction
 

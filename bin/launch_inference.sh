@@ -1,0 +1,9 @@
+sbatch -p yejin --output=logs/back_0_fold.log bin/run_fold.sh data/boltz_all_mask_playback_0
+sbatch -p yejin --output=logs/back_1_fold.log bin/run_fold.sh data/boltz_all_mask_playback_1
+sbatch -p yejin --output=logs/no_back_0_fold.log bin/run_fold.sh data/boltz_all_mask_no_playback_0
+sbatch -p yejin --output=logs/no_back_1_fold.log bin/run_fold.sh data/boltz_all_mask_no_playback_1
+
+sbatch -p yejin --output=logs/back_0_inpaint.log bin/run_inpaint.sh data/boltz_predicted_playback_0
+sbatch -p yejin --output=logs/back_1_inpaint.log bin/run_inpaint.sh data/boltz_predicted_playback_1
+sbatch -p yejin --output=logs/no_back_0_inpaint.log bin/run_inpaint.sh data/boltz_predicted_no_playback_0
+sbatch -p yejin --output=logs/no_back_1_inpaint.log bin/run_inpaint.sh data/boltz_predicted_no_playback_1

@@ -18,10 +18,13 @@ conda activate $CONDA/envs/mfdesign
 
 export PYTHONPATH=$CONDA/envs/mfdesign/bin/python
 
+# Get data directory from command line argument
+DATA_DIR=$1
 
 # Run inpaint
 python scripts/predict.py \
-    --data data/structure/inpaint \
+    --data $DATA_DIR \
+    --out_dir ./output/inpaint \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
     --only_structure_prediction \
