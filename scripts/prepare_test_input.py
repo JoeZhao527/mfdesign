@@ -83,7 +83,7 @@ def process_yaml(input_path: Path, output_dir: Path, mode: str):
                         seq_data['sequence'] = seq_data['ground_truth']
                     if is_antigen and 'spec_mask' in seq_data:
                         seq_len = len(seq_data.get('sequence', ''))
-                        seq_data['spec_mask'] = '1' * seq_len
+                        seq_data['spec_mask'] = '0' * seq_len
                         
                 elif mode == 'fold':
                     # Antibody: use ground_truth sequence, spec_mask all 1s
