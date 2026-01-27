@@ -26,6 +26,6 @@ python scripts/predict.py \
     --data $DATA_DIR \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
-    --out_dir ./output/fold \
+    --out_dir ./native_output/fold \
     --only_structure_prediction
 

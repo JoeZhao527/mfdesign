@@ -24,7 +24,7 @@ DATA_DIR=$1
 # Run inpaint
 python scripts/predict.py \
     --data $DATA_DIR \
-    --out_dir ./output/inpaint \
+    --out_dir ./native_output/inpaint \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
     --only_structure_prediction \
