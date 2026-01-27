@@ -198,9 +198,14 @@ class PredictionDataset(torch.utils.data.Dataset):
                     start = token["atom_idx"]
                     end = token["atom_idx"] + token["atom_num"]
                     token_atoms = ground_truth.atoms[start:end]
-                    if len(token_atoms) < tokenized.tokens[i]["atom_num"]:
+                    target_atom_num = tokenized.tokens[i]["atom_num"]
+                    if len(token_atoms) < target_atom_num:
+                        # Pad if ground_truth has fewer atoms
                         token_atoms = np.concatenate([token_atoms, 
-                        np.zeros(tokenized.tokens[i]["atom_num"] - len(token_atoms), dtype=token_atoms.dtype)])
+                        np.zeros(target_atom_num - len(token_atoms), dtype=token_atoms.dtype)])
+                    elif len(token_atoms) > target_atom_num:
+                        # Truncate if ground_truth has more atoms
+                        token_atoms = token_atoms[:target_atom_num]
                     coord_data.append(np.array([token_atoms["coords"]]))
                     resolved_mask.append(token_atoms["is_present"])
                     # Use spec_mask to determine inpaint region:
