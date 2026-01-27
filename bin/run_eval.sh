@@ -23,7 +23,7 @@ for dir in "${FOLD_DIRS[@]}"; do
         --data_dir output/fold/$dir/predictions \
         --ref_dir ./data/test_entry_pdb_files \
         --test_yaml_dir data/test_yaml_dir/ab \
-        --test_json_fpath data/test_entry.json \
+        -test_json_fpath data/test_entry.json \
         --model boltz \
         --suffix _model_0.pdb \
         -c 20
@@ -36,7 +36,7 @@ for dir in "${INPAINT_DIRS[@]}"; do
         --data_dir output/inpaint/$dir/predictions \
         --ref_dir ./data/test_entry_pdb_files \
         --test_yaml_dir data/test_yaml_dir/ab \
-        --test_json_fpath data/test_entry.json \
+        -test_json_fpath data/test_entry.json \
         --model boltz \
         --suffix _model_0.pdb \
         -c 20
