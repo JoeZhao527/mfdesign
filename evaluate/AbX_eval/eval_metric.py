@@ -15,6 +15,8 @@ from abx.metric import (boltz_eval_metric,
                         cdr_numbering)
 
 from ruamel.yaml import YAML
+import warnings
+warnings.filterwarnings("ignore")
 
 def read_yaml_file(file_path, heavy_id, light_id):
     """
