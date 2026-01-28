@@ -1,11 +1,11 @@
 python evaluate/AbX_eval/cal_interface_energy.py \
-    --pdb_dir 0128_out/inpaint/boltz_results_boltz_predicted_trail_0/predictions \
-    --output_dir binding_res/gen_trial_0 \
+    --pdb_dir relaxed_out/trial0/predictions \
+    --output_dir binding_res/raw_gen_trial_0 \
     --cpus 50 &
 
 python evaluate/AbX_eval/cal_interface_energy.py \
-    --pdb_dir 0128_out/inpaint/boltz_results_boltz_predicted_trail_1/predictions \
-    --output_dir binding_res/gen_trial_1 \
+    --pdb_dir relaxed_out/trial1/predictions \
+    --output_dir binding_res/raw_gen_trial_1 \
     --cpus 50 &
 
 wait
