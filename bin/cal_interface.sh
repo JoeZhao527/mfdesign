@@ -1,14 +1,12 @@
 python evaluate/AbX_eval/cal_interface_energy.py \
     --pdb_dir relaxed_out/trial0/predictions \
     --output_dir binding_res/raw_gen_trial_0 \
-    --cpus 50 &
+    --cpus 20
 
 python evaluate/AbX_eval/cal_interface_energy.py \
     --pdb_dir relaxed_out/trial1/predictions \
     --output_dir binding_res/raw_gen_trial_1 \
-    --cpus 50 &
-
-wait
+    --cpus 20
 
 # python evaluate/AbX_eval/cal_interface_energy.py \
 #     --pdb_dir relaxed_out/fold/boltz_results_boltz_all_mask_playback_0/predictions \
