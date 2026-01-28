@@ -107,38 +107,38 @@ def parse_our_design_pdb_list(pdb_dir, suffix='_relaxed.pdb'):
     #                 yield pdb_fpath, new_pdb_core_name, pdb_core_name
     sub_path_list = [item for item in os.listdir(pdb_dir)
                      if not item.endswith('.log') and not item.endswith('.csv')]
-    for item_pdb in sub_path_list:
+    for _item_pdb in sub_path_list:
         # print(item_pdb)
         # pdb_fpath_list = []
-        item_pdb = os.path.join(pdb_dir, item_pdb)
-        
-        if not item_pdb.endswith('_relaxed_relaxed.pdb'):
-            if item_pdb.endswith(suffix):
-                pdb_fpath = os.path.join(pdb_dir, item_pdb)
-                # print(pdb_fpath)
-                item_pdb_list = item_pdb.split('_')
-                pdb_core_name = f'{item_pdb_list[0]}_{item_pdb_list[1]}_{item_pdb_list[2]}_{item_pdb_list[3]}'
-                # print(pdb_core_name)
-                # pdb_core_name = sub_fpath.split('/')[-1]
-                order_name = ['A', 'B', 'C', 'D', 'E', 'F']
-                pdb_core_name_list = pdb_core_name.split('_')
-                code = pdb_core_name_list[0]
-                sum_chain = len(''.join(pdb_core_name_list[1:]))
-                select_name = order_name[:sum_chain]
-                anti_count = len(pdb_core_name_list[1] + pdb_core_name_list[2])
-                if anti_count == 1:
-                    heavy_name = select_name[0]
-                    light_name = ''
-                    ag_name = ''.join(select_name[1:])
-                elif anti_count == 2:
-                    heavy_name = select_name[0]
-                    light_name = select_name[1]
-                    ag_name = ''.join(select_name[2:])
-                new_pdb_core_name = f'{code}_{heavy_name}_{light_name}_{ag_name}'  
-                # print(new_pdb_core_name)
-                # print(pdb_core_name)
-                # print(new_pdb_core_name)
-                yield pdb_fpath, new_pdb_core_name, pdb_core_name
+        item_models = os.listdir(os.path.join(pdb_dir, _item_pdb))
+        for item_pdb in item_models:
+            if not item_pdb.endswith('_relaxed_relaxed.pdb'):
+                if item_pdb.endswith(suffix):
+                    pdb_fpath = os.path.join(pdb_dir, _item_pdb, item_pdb)
+                    # print(pdb_fpath)
+                    item_pdb_list = item_pdb.split('_')
+                    pdb_core_name = f'{item_pdb_list[0]}_{item_pdb_list[1]}_{item_pdb_list[2]}_{item_pdb_list[3]}'
+                    # print(pdb_core_name)
+                    # pdb_core_name = sub_fpath.split('/')[-1]
+                    order_name = ['A', 'B', 'C', 'D', 'E', 'F']
+                    pdb_core_name_list = pdb_core_name.split('_')
+                    code = pdb_core_name_list[0]
+                    sum_chain = len(''.join(pdb_core_name_list[1:]))
+                    select_name = order_name[:sum_chain]
+                    anti_count = len(pdb_core_name_list[1] + pdb_core_name_list[2])
+                    if anti_count == 1:
+                        heavy_name = select_name[0]
+                        light_name = ''
+                        ag_name = ''.join(select_name[1:])
+                    elif anti_count == 2:
+                        heavy_name = select_name[0]
+                        light_name = select_name[1]
+                        ag_name = ''.join(select_name[2:])
+                    new_pdb_core_name = f'{code}_{heavy_name}_{light_name}_{ag_name}'  
+                    # print(new_pdb_core_name)
+                    # print(pdb_core_name)
+                    # print(new_pdb_core_name)
+                    yield pdb_fpath, new_pdb_core_name, pdb_core_name
 
 
 def parse_diffab_design_pdb_list(pdb_dir, suffix_length=21):
