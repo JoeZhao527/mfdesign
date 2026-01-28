@@ -15,14 +15,14 @@ import logging
 from abx.preprocess.numbering import renumber_ab_seq, get_ab_regions
 
 
-# from pyrosetta import *
-# from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
+from pyrosetta import *
+from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
 
 #Core Includesfrom pyrosetta import create_score_function
 
 
-# init('-use_input_sc -input_ab_scheme AHo_Scheme -ignore_unrecognized_res \
-#     -ignore_zero_occupancy false -load_PDB_components true -relax:default_repeats 2 -no_fconfig')
+init('-use_input_sc -input_ab_scheme AHo_Scheme -ignore_unrecognized_res \
+    -ignore_zero_occupancy false -load_PDB_components true -relax:default_repeats 2 -no_fconfig')
 
 
 def pyrosetta_interface_energy(pdb_path, interface):
