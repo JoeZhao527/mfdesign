@@ -44,7 +44,7 @@ done
 
 
 python evaluate/AbX_eval/eval_metric.py \
-        --data_dir native_output/fold/boltz_results_fold/predictions \
+        --data_dir 0128_out/inpaint/boltz_results_boltz_predicted_trail_1/predictions \
         --ref_dir ./data/test_entry_pdb_files \
         --test_yaml_dir data/test_yaml_dir/ab \
         -test_json_fpath data/test_entry.json \
