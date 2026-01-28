@@ -1,0 +1,169 @@
+{
+    "entry_name": "7vgs_D_C_A",
+    "heavy_chain_id": "D",
+    "light_chain_id": "C",
+    "chain_mapping": {
+      "protenix_to_original": {
+        "A": "A",
+        "B": "C",
+        "C": "D"
+      },
+      "original_to_protenix": {
+        "A": "A",
+        "C": "B",
+        "D": "C"
+      },
+      "sequence_order": [
+        {
+          "protenix_chain": "A",
+          "original_chain": "A",
+          "seq_len": 246,
+          "entity_type": "proteinChain"
+        },
+        {
+          "protenix_chain": "B",
+          "original_chain": "C",
+          "seq_len": 218,
+          "entity_type": "proteinChain"
+        },
+        {
+          "protenix_chain": "C",
+          "original_chain": "D",
+          "seq_len": 229,
+          "entity_type": "proteinChain"
+        }
+      ]
+    },
+    "cdr_info": {
+      "H_chain": {
+        "cdr_indices": [
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          98,
+          99,
+          100,
+          101
+        ],
+        "variable_domain_start_res_id": 1,
+        "cdr1": {
+          "indices": [
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31
+          ]
+        },
+        "cdr2": {
+          "indices": [
+            51,
+            52,
+            53,
+            54,
+            55,
+            56
+          ]
+        },
+        "cdr3": {
+          "indices": [
+            98,
+            99,
+            100,
+            101
+          ]
+        }
+      },
+      "L_chain": {
+        "cdr_indices": [
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "variable_domain_start_res_id": 1,
+        "cdr1": {
+          "indices": [
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37
+          ]
+        },
+        "cdr2": {
+          "indices": [
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59
+          ]
+        },
+        "cdr3": {
+          "indices": [
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100
+          ]
+        }
+      }
+    }
+  }

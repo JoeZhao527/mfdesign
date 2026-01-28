@@ -1,0 +1,46 @@
+[
+    {
+      "sequences": [
+        {
+          "proteinChain": {
+            "sequence": "MHHHHHHHHDYKDDDDKENLYFQGMADSNGTITVEELKKLLEQWNLVIGFLFLTWICLLQFAYANRNRFLYIIKLIFLWLLWPVTLACFVLAAVYRINWITGGIAIAMACLVGLMWLSYFIASFRLFARTRSMWSFNPETNILLNVPLHGTILTRPLLESELVIGAVILRGHLRIAGHHLGRCDIKDLPKEITVATSRTLSYYKLGASQRVAGDSGFAAYSRYRIGNYKLNTDHSSSSDNIALLVQ",
+            "count": 1,
+            "label_entity_id": "1",
+            "label_asym_id": [
+              "A"
+            ],
+            "auth_asym_id": [
+              "A"
+            ]
+          }
+        },
+        {
+          "proteinChain": {
+            "sequence": "DIVMTQSPASLAVSLGQRATISCKASQSIDYDGDNYMNWYQQKPGQPPKLLIYTTSNLESGIPARFSGSGSGTDFTLNIHPVEEGDAATYYCQQNNEDPYTFGGGTKLEIKRADAAPTVSIFPPSSEQLTSGGASVVCFLNNFYPKDINVKWKIDGSERQNGVLNSWTDQDSKDSTYSMSSTLTLTKDEYERHNSYTCEATHKTSTSPIVKSFNRNEC",
+            "count": 1,
+            "label_entity_id": "2",
+            "label_asym_id": [
+              "B"
+            ],
+            "auth_asym_id": [
+              "C"
+            ]
+          }
+        },
+        {
+          "proteinChain": {
+            "sequence": "EVQLQQSGPELVKPGASMKISCKTSGYSFTGYTMNWVKQSHGKNLEWIGLINPYNGDTSYNQKFKGKATLTVDKSSSTAYMELLSLTSEDSAVYYCEVINTYWGQGTLVTVSAAKTTPPSVYPLAPGSAAQTNSMVTLGCLVKGYFPEPVTVTWNSGSLSSGVHTFPAVLQSDLYTLSSSVTVPSSTWPSETVTCNVAHPASSTKVDKKIVPRDCGCKPCICTVPEVSS",
+            "count": 1,
+            "label_entity_id": "3",
+            "label_asym_id": [
+              "C"
+            ],
+            "auth_asym_id": [
+              "D"
+            ]
+          }
+        }
+      ],
+      "name": "7vgs_D_C_A"
+    }
+]
