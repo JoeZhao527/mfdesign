@@ -1,14 +1,24 @@
 #!/bin/bash
 
 python evaluate/AbX_eval/our_relax_pdb.py \
-        --data_dir output/fold/boltz_results_boltz_all_mask_playback_1/predictions \
-        --output_dir output/fold/boltz_results_boltz_all_mask_playback_1/relaxed \
+        --data_dir native_output/fold/boltz_results_fold/predictions/ \
+        --output_dir native_output/fold/boltz_results_fold/predictions/ \
         --split_json data/test_entry.json \
         --type boltz \
         --ref_dir ./data/test_entry_pdb_files \
         --test_yaml_dir data/test_yaml_dir/ab \
         --scheme chothia \
-        --cpus 20
+        --cpus 20 
+
+python evaluate/AbX_eval/our_relax_pdb.py \
+        --data_dir native_output/inpaint/boltz_results_inpaint/predictions/ \
+        --output_dir native_output/inpaint/boltz_results_inpaint/predictions/ \
+        --split_json data/test_entry.json \
+        --type boltz \
+        --ref_dir ./data/test_entry_pdb_files \
+        --test_yaml_dir data/test_yaml_dir/ab \
+        --scheme chothia \
+        --cpus 20 
 
 # Fold results
 FOLD_DIRS=(
