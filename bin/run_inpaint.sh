@@ -20,11 +20,12 @@ export PYTHONPATH=$CONDA/envs/mfdesign/bin/python
 
 # Get data directory from command line argument
 DATA_DIR=$1
+OUTPUT_DIR=$2
 
 # Run inpaint
 python scripts/predict.py \
     --data $DATA_DIR \
-    --out_dir ./0128_out/inpaint \
+    --out_dir $OUTPUT_DIR \
     --processed_msa_dir data/msa \
     --checkpoint ./model/boltz1.ckpt \
     --only_structure_prediction \
