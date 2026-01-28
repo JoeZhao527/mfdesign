@@ -110,6 +110,8 @@ def parse_our_design_pdb_list(pdb_dir, suffix='_relaxed.pdb'):
     for item_pdb in sub_path_list:
         # print(item_pdb)
         # pdb_fpath_list = []
+        item_pdb = os.path.join(pdb_dir, item_pdb)
+        
         if not item_pdb.endswith('_relaxed_relaxed.pdb'):
             if item_pdb.endswith(suffix):
                 pdb_fpath = os.path.join(pdb_dir, item_pdb)
