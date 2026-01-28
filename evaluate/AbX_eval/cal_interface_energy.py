@@ -44,6 +44,9 @@ from pyrosetta.rosetta.protocols.relax import FastRelax
 from pyrosetta.rosetta.core.select.movemap import MoveMapFactory, move_map_action
 from pyrosetta.rosetta.protocols.minimization_packing import PackRotamersMover
 
+import warnings
+warnings.filterwarnings("ignore")
+
 init('-use_input_sc -input_ab_scheme AHo_Scheme -ignore_unrecognized_res \
     -ignore_zero_occupancy false -load_PDB_components true -relax:default_repeats 2 -no_fconfig')
 
