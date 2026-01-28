@@ -51,3 +51,22 @@ python evaluate/AbX_eval/eval_metric.py \
         --model boltz \
         --suffix _model_0.pdb \
         -c 40
+
+
+python evaluate/AbX_eval/eval_metric.py \
+    --data_dir 0128_out/inpaint/boltz_results_boltz_predicted_trail_1/predictions \
+    --ref_dir ./data/test_entry_pdb_files \
+    --test_yaml_dir data/test_yaml_dir/ab \
+    -test_json_fpath evaluate/AbX_eval/regular_list.json \
+    --model boltz \
+    --suffix _model_0.pdb \
+    -c 10
+
+python evaluate/AbX_eval/eval_metric.py \
+    --data_dir 0128_out/inpaint/boltz_results_boltz_predicted_trail_1/predictions \
+    --ref_dir ./data/test_entry_pdb_files \
+    --test_yaml_dir data/test_yaml_dir/ab \
+    -test_json_fpath evaluate/AbX_eval/nano_list.json \
+    --model boltz \
+    --suffix _model_0.pdb \
+    -c 10
