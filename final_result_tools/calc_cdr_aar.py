@@ -38,6 +38,31 @@ def calc_aar(sequence, ground_truth, region):
     return matches / len(seq_region)
 
 
+def calc_loop_aar(sequence, ground_truth, region, scheme='chothia'):
+    """
+    计算CDR-H3中间loop区域的AAR。
+    IMGT scheme: 排除前4个和后2个残基 [4:-2]
+    Chothia scheme: 排除前2个和后2个残基 [2:-2]
+    """
+    start, end = region
+    seq_region = sequence[start:end]
+    gt_region = ground_truth[start:end]
+    
+    # 根据scheme选择loop区域
+    if scheme == 'imgt':
+        seq_loop = seq_region[4:-2] if len(seq_region) > 6 else seq_region
+        gt_loop = gt_region[4:-2] if len(gt_region) > 6 else gt_region
+    else:  # chothia
+        seq_loop = seq_region[2:-2] if len(seq_region) > 4 else seq_region
+        gt_loop = gt_region[2:-2] if len(gt_region) > 4 else gt_region
+    
+    if len(seq_loop) == 0:
+        return 0.0
+    
+    matches = sum(1 for s, g in zip(seq_loop, gt_loop) if s == g)
+    return matches / len(seq_loop)
+
+
 def parse_yaml_name(yaml_name):
     """解析yaml文件名，获取抗体链ID"""
     name = yaml_name.replace('.yaml', '')
@@ -98,6 +123,10 @@ def main():
                     cdr_name = heavy_cdr_names[i] if i < len(heavy_cdr_names) else f'H{i+1}'
                     aar = calc_aar(heavy['sequence'], heavy['ground_truth'], region)
                     result[cdr_name] = aar
+                    # 对H3计算Loop-AAR
+                    if cdr_name == 'H3':
+                        loop_aar = calc_loop_aar(heavy['sequence'], heavy['ground_truth'], region)
+                        result['H3_Loop'] = loop_aar
         
         # 处理轻链（第二条抗体链，如果有）
         if len(antibody_chains) >= 2:
