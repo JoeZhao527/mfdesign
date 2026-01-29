@@ -32,7 +32,7 @@ def main(args):
     hidden_dim = 128
     num_layers = 3
 
-    path_to_model_weights='../antibmpnn_model_weights' 
+    path_to_model_weights='./antibmpnn_model_weights' 
     model_folder_path = path_to_model_weights 
     if model_folder_path[-1] != '/': 
         model_folder_path = model_folder_path + '/' 
