@@ -113,12 +113,14 @@ def parse_yaml(yaml_path):
     Parse YAML file to extract chain info and X positions.
     
     Returns:
-        dict: {chain_id: {'sequence': str, 'x_positions': list of 1-indexed positions}}
+        chain_info: {chain_id: {'sequence': str, 'x_positions': list of 1-indexed positions}}
+        chain_order: list of chain IDs in YAML order
     """
     with open(yaml_path, 'r') as f:
         data = yaml.safe_load(f)
     
     chain_info = {}
+    chain_order = []  # Keep track of chain order in YAML
     for seq_entry in data.get('sequences', []):
         if 'protein' in seq_entry:
             protein = seq_entry['protein']
@@ -133,8 +135,9 @@ def parse_yaml(yaml_path):
                 'x_positions': x_positions,
                 'has_x': len(x_positions) > 0
             }
+            chain_order.append(chain_id)
     
-    return chain_info
+    return chain_info, chain_order
 
 
 def parse_pdb_for_antibmpnn(pdb_path):
@@ -222,12 +225,12 @@ def main():
             continue
         
         # Parse YAML to get chain info and X positions
-        chain_info = parse_yaml(yaml_path)
+        chain_info, yaml_chain_order = parse_yaml(yaml_path)
         
-        # Find chains that need to be designed (have X in sequence)
-        chains_to_design = [ch for ch, info in chain_info.items() if info['has_x']]
+        # Find YAML chains that need to be designed (have X in sequence)
+        yaml_chains_to_design = [ch for ch in yaml_chain_order if chain_info[ch]['has_x']]
         
-        if not chains_to_design:
+        if not yaml_chains_to_design:
             print(f"Warning: No chains with 'X' positions in {yaml_name}, skipping")
             skipped_count += 1
             continue
@@ -242,40 +245,58 @@ def main():
         parsed_dict['name'] = yaml_name
         parsed_pdbs.append(parsed_dict)
         
-        # Get all chains from parsed PDB
-        all_chains = [k.split('_')[-1] for k in parsed_dict.keys() if k.startswith('seq_chain_')]
-        fixed_chains = [ch for ch in all_chains if ch not in chains_to_design]
+        # Get all chains from parsed PDB (in order)
+        pdb_chains = sorted([k.split('_')[-1] for k in parsed_dict.keys() if k.startswith('seq_chain_')])
+        
+        # Build mapping: YAML chain ID -> PDB chain ID (based on order)
+        # YAML order: [E, D, A] -> PDB order: [A, B, C] => E->A, D->B, A->C
+        yaml_to_pdb = {}
+        for i, yaml_ch in enumerate(yaml_chain_order):
+            if i < len(pdb_chains):
+                yaml_to_pdb[yaml_ch] = pdb_chains[i]
+        
+        # Map chains to design from YAML IDs to PDB IDs
+        chains_to_design = [yaml_to_pdb[ch] for ch in yaml_chains_to_design if ch in yaml_to_pdb]
+        fixed_chains = [ch for ch in pdb_chains if ch not in chains_to_design]
         
         # Assigned chains format: {"name": [[designed], [fixed]]}
         assigned_chains[yaml_name] = [chains_to_design, fixed_chains]
         
         # Fixed positions format: {"name": {"chain": [fixed_positions_list]}}
         fixed_pos_dict = {}
-        for chain in all_chains:
-            seq_key = f'seq_chain_{chain}'
+        for pdb_chain in pdb_chains:
+            seq_key = f'seq_chain_{pdb_chain}'
             if seq_key in parsed_dict:
                 seq_length = len(parsed_dict[seq_key])
                 all_positions = list(range(1, seq_length + 1))  # 1-indexed
                 
-                if chain in chains_to_design and chain in chain_info:
+                # Find corresponding YAML chain
+                yaml_chain = None
+                for y_ch, p_ch in yaml_to_pdb.items():
+                    if p_ch == pdb_chain:
+                        yaml_chain = y_ch
+                        break
+                
+                if pdb_chain in chains_to_design and yaml_chain and yaml_chain in chain_info:
                     # For design chains: fix all positions EXCEPT X positions
-                    x_positions = chain_info[chain]['x_positions']
+                    x_positions = chain_info[yaml_chain]['x_positions']
                     fixed_pos = [p for p in all_positions if p not in x_positions]
-                    fixed_pos_dict[chain] = fixed_pos
+                    fixed_pos_dict[pdb_chain] = fixed_pos
                 else:
                     # For non-design chains: fix all positions
-                    fixed_pos_dict[chain] = all_positions
+                    fixed_pos_dict[pdb_chain] = all_positions
         
         fixed_positions[yaml_name] = fixed_pos_dict
         processed_count += 1
         
         # Print summary for this entry
         design_summary = []
-        for ch in chains_to_design:
-            if ch in chain_info:
-                x_pos = chain_info[ch]['x_positions']
+        for yaml_ch in yaml_chains_to_design:
+            pdb_ch = yaml_to_pdb.get(yaml_ch)
+            if yaml_ch in chain_info and pdb_ch:
+                x_pos = chain_info[yaml_ch]['x_positions']
                 if x_pos:
-                    design_summary.append(f"{ch}:[{min(x_pos)}-{max(x_pos)}]({len(x_pos)} pos)")
+                    design_summary.append(f"{yaml_ch}->{pdb_ch}:[{min(x_pos)}-{max(x_pos)}]({len(x_pos)} pos)")
         print(f"  {yaml_name}: design {', '.join(design_summary)}")
     
     # Write output JSONL files
