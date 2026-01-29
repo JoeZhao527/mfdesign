@@ -2,8 +2,8 @@
 #SBATCH --job-name=fold
 #SBATCH --output=logs/fold.log
 #SBATCH --chdir=/hai/scratch/fangwu97/mfdesign/AntiBMPNN
-#SBATCH --cpus-per-task=4        # Number of CPU cores per task
-#SBATCH --mem=100G                # Total memory per node (or job), e.g. 16G, 3200M
+#SBATCH --cpus-per-task=20        # Number of CPU cores per task
+#SBATCH --mem=200G                # Total memory per node (or job), e.g. 16G, 3200M
 #SBATCH --time=1-00:00:00       # 3 days
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
