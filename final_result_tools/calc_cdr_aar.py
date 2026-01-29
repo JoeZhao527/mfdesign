@@ -2,11 +2,14 @@
 """
 计算每个CDR区的AAR (Amino Acid Recovery)。
 CDR区域由spec_mask中的'1'标识。
+支持多sample模式：对每个case的多个sample分别计算AAR，然后取平均。
 """
 
 import argparse
 import json
+import re
 from pathlib import Path
+from collections import defaultdict
 import yaml
 
 
@@ -64,14 +67,22 @@ def calc_loop_aar(sequence, ground_truth, region, scheme='chothia'):
 
 
 def parse_yaml_name(yaml_name):
-    """解析yaml文件名，获取抗体链ID"""
+    """解析yaml文件名，获取抗体链ID（去掉_sampleN后缀）"""
     name = yaml_name.replace('.yaml', '')
+    # 去掉_sampleN后缀
+    name = re.sub(r'_sample\d+$', '', name)
     parts = name.split('_')
     chain_parts = parts[1:]
     antigen_part = chain_parts[-1]
     antibody_parts = chain_parts[:-1]
     antibody_chains = [c for c in antibody_parts if c]
     return antibody_chains
+
+
+def get_base_case_name(yaml_name):
+    """从yaml文件名获取base case name（去掉_sampleN后缀）"""
+    name = yaml_name.replace('.yaml', '')
+    return re.sub(r'_sample\d+$', '', name)
 
 
 def main():
@@ -85,17 +96,21 @@ def main():
     # 读取列表
     with open(args.list_file, 'r') as f:
         case_list = json.load(f)
-    
-    # 收集结果
-    all_results = []
+    case_set = set(case_list)
     
     # CDR名称：重链H1,H2,H3；轻链L1,L2,L3
     heavy_cdr_names = ['H1', 'H2', 'H3']
     light_cdr_names = ['L1', 'L2', 'L3']
     
-    for case_name in case_list:
-        yaml_path = yaml_dir / f'{case_name}.yaml'
-        if not yaml_path.exists():
+    # 收集每个case的所有sample结果: {case_name: [{cdr: aar, ...}, ...]}
+    case_samples = defaultdict(list)
+    
+    # 遍历yaml_dir中的所有yaml文件
+    for yaml_path in yaml_dir.glob('*.yaml'):
+        base_case_name = get_base_case_name(yaml_path.name)
+        
+        # 只处理在list中的case
+        if base_case_name not in case_set:
             continue
         
         with open(yaml_path, 'r') as f:
@@ -111,7 +126,7 @@ def main():
             if chain_id in antibody_chains:
                 chain_data[chain_id] = protein['protein']
         
-        result = {'name': case_name}
+        result = {}
         
         # 处理重链（第一条抗体链）
         if len(antibody_chains) >= 1:
@@ -139,7 +154,31 @@ def main():
                     aar = calc_aar(light['sequence'], light['ground_truth'], region)
                     result[cdr_name] = aar
         
-        all_results.append(result)
+        if result:
+            case_samples[base_case_name].append(result)
+    
+    # 对每个case计算sample平均值
+    all_results = []
+    for case_name in case_list:
+        if case_name not in case_samples:
+            continue
+        
+        samples = case_samples[case_name]
+        if not samples:
+            continue
+        
+        # 计算每个CDR的平均值
+        avg_result = {'name': case_name}
+        all_cdrs = set()
+        for s in samples:
+            all_cdrs.update(s.keys())
+        
+        for cdr in all_cdrs:
+            values = [s[cdr] for s in samples if cdr in s]
+            if values:
+                avg_result[cdr] = sum(values) / len(values)
+        
+        all_results.append(avg_result)
     
     # 打印结果
     if not all_results:
@@ -164,16 +203,6 @@ def main():
     header = ['name'] + cdr_cols
     print('\t'.join(header))
     
-    # # 打印每行
-    # for r in all_results:
-    #     row = [r['name']]
-    #     for cdr in cdr_cols:
-    #         if cdr in r:
-    #             row.append(f'{r[cdr]:.4f}')
-    #         else:
-    #             row.append('-')
-    #     print('\t'.join(row))
-    
     # 打印平均值
     print('-' * 80)
     avg_row = ['Average']
@@ -184,7 +213,11 @@ def main():
         else:
             avg_row.append('-')
     print('\t'.join(avg_row))
+    
+    # 打印统计信息
+    print(f'\nTotal cases: {len(all_results)}')
+    print(f'Samples per case: {len(case_samples[all_results[0]["name"]]) if all_results else 0}')
+
 
 if __name__ == '__main__':
     main()
-

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-从fasta文件中选取score最高的序列，更新对应的yaml文件。
+从fasta文件中提取所有sample序列，更新对应的yaml文件。
+- 每个sample单独存为一个yaml文件
 - 替换抗体链的sequence
 - 将抗原链的spec_mask全改成0
 """
@@ -11,8 +12,8 @@ from pathlib import Path
 import yaml
 
 
-def parse_fasta(fasta_path):
-    """解析fasta文件，返回score最高的sample序列"""
+def parse_fasta_all_samples(fasta_path):
+    """解析fasta文件，返回所有sample序列"""
     samples = []
     with open(fasta_path, 'r') as f:
         lines = f.readlines()
@@ -25,19 +26,21 @@ def parse_fasta(fasta_path):
             # 只考虑sample行，不要原始序列
             if 'sample=' in header:
                 score_match = re.search(r'score=([0-9.]+)', header)
-                if score_match:
+                sample_match = re.search(r'sample=(\d+)', header)
+                if score_match and sample_match:
                     score = float(score_match.group(1))
-                    samples.append({'header': header, 'sequence': seq, 'score': score})
+                    sample_id = int(sample_match.group(1))
+                    samples.append({
+                        'header': header,
+                        'sequence': seq,
+                        'score': score,
+                        'sample_id': sample_id
+                    })
             i += 2
         else:
             i += 1
     
-    if not samples:
-        return None
-    
-    # 选score最高的
-    best = max(samples, key=lambda x: x['score'])
-    return best
+    return samples
 
 
 def parse_yaml_name(yaml_name):
@@ -86,56 +89,62 @@ def main():
             print(f'Warning: {yaml_path} not found, skipping {fasta_file.name}')
             continue
         
-        # 解析fasta获取最佳序列
-        best_sample = parse_fasta(fasta_file)
-        if not best_sample:
+        # 解析fasta获取所有sample序列
+        samples = parse_fasta_all_samples(fasta_file)
+        if not samples:
             print(f'Warning: No samples found in {fasta_file.name}, skipping')
             continue
         
-        # 读取yaml
+        # 读取原始yaml
         with open(yaml_path, 'r') as f:
-            data = yaml.safe_load(f)
+            original_data = yaml.safe_load(f)
         
         # 从yaml文件名获取链信息
         antibody_chains, antigen_chains = parse_yaml_name(yaml_path.name)
         
-        # 分割序列（用/分隔）
-        seqs = best_sample['sequence'].split('/')
-        assert len(seqs) == len(antibody_chains), \
-            f'{fasta_file.name}: 序列数量({len(seqs)})与抗体链数量({len(antibody_chains)})不匹配'
-        
-        # 更新yaml
-        skip_this = False
-        for protein in data['sequences']:
-            chain_id = protein['protein']['id']
+        # 为每个sample创建yaml文件
+        for sample in samples:
+            # 深拷贝原始数据
+            import copy
+            data = copy.deepcopy(original_data)
             
-            if chain_id in antibody_chains:
-                # 替换抗体链序列
-                idx = antibody_chains.index(chain_id)
-                new_seq = seqs[idx]
-                old_seq = protein['protein']['sequence']
-                if len(new_seq) != len(old_seq):
-                    print(f'Warning: {fasta_file.name}: 链{chain_id}序列长度不匹配({len(new_seq)} vs {len(old_seq)}), skipping')
-                    skip_this = True
-                    break
-                protein['protein']['sequence'] = new_seq
+            # 分割序列（用/分隔）
+            seqs = sample['sequence'].split('/')
+            if len(seqs) != len(antibody_chains):
+                print(f'Warning: {fasta_file.name} sample {sample["sample_id"]}: '
+                      f'序列数量({len(seqs)})与抗体链数量({len(antibody_chains)})不匹配, skipping')
+                continue
             
-            elif chain_id in antigen_chains:
-                # 抗原链的spec_mask全改成0
-                old_mask = protein['protein']['spec_mask']
-                protein['protein']['spec_mask'] = '0' * len(old_mask)
-        
-        if skip_this:
-            continue
-        
-        # 写入输出
-        output_path = output_dir / yaml_path.name
-        with open(output_path, 'w') as f:
-            yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-        
-        # print(f'Processed: {fasta_file.name} (score={best_sample["score"]:.4f}) -> {output_path.name}')
+            # 更新yaml
+            skip_this = False
+            for protein in data['sequences']:
+                chain_id = protein['protein']['id']
+                
+                if chain_id in antibody_chains:
+                    # 替换抗体链序列
+                    idx = antibody_chains.index(chain_id)
+                    new_seq = seqs[idx]
+                    old_seq = protein['protein']['sequence']
+                    if len(new_seq) != len(old_seq):
+                        print(f'Warning: {fasta_file.name} sample {sample["sample_id"]}: '
+                              f'链{chain_id}序列长度不匹配({len(new_seq)} vs {len(old_seq)}), skipping')
+                        skip_this = True
+                        break
+                    protein['protein']['sequence'] = new_seq
+                
+                elif chain_id in antigen_chains:
+                    # 抗原链的spec_mask全改成0
+                    old_mask = protein['protein']['spec_mask']
+                    protein['protein']['spec_mask'] = '0' * len(old_mask)
+            
+            if skip_this:
+                continue
+            
+            # 写入输出，文件名加上sample_id
+            output_path = output_dir / f'{base_name}_sample{sample["sample_id"]}.yaml'
+            with open(output_path, 'w') as f:
+                yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == '__main__':
     main()
-
