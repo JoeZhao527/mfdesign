@@ -101,7 +101,7 @@ def main():
         
         # 分割序列（用/分隔）
         seqs = best_sample['sequence'].split('/')
-        assert len(seqs) == len(antibody_chains) + 1, \
+        assert len(seqs) == len(antibody_chains), \
             f'{fasta_file.name}: 序列数量({len(seqs)})与抗体链数量({len(antibody_chains)})不匹配'
         
         # 更新yaml
