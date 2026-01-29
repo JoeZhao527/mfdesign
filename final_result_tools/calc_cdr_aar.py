@@ -127,15 +127,15 @@ def main():
     header = ['name'] + cdr_cols
     print('\t'.join(header))
     
-    # 打印每行
-    for r in all_results:
-        row = [r['name']]
-        for cdr in cdr_cols:
-            if cdr in r:
-                row.append(f'{r[cdr]:.4f}')
-            else:
-                row.append('-')
-        print('\t'.join(row))
+    # # 打印每行
+    # for r in all_results:
+    #     row = [r['name']]
+    #     for cdr in cdr_cols:
+    #         if cdr in r:
+    #             row.append(f'{r[cdr]:.4f}')
+    #         else:
+    #             row.append('-')
+    #     print('\t'.join(row))
     
     # 打印平均值
     print('-' * 80)
@@ -147,7 +147,6 @@ def main():
         else:
             avg_row.append('-')
     print('\t'.join(avg_row))
-
 
 if __name__ == '__main__':
     main()
