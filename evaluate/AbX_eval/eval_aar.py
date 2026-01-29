@@ -46,6 +46,30 @@ def read_yaml_file(file_path, heavy_id, light_id):
     return heavy_spec_mask, light_spec_mask # heavy_seq, light_seq
 
 
+def read_yaml_for_antibmpnn(file_path):
+    """
+    Read YAML file and return ground truth sequences and spec masks.
+    Chain order in YAML matches the order in FASTA output (heavy/light).
+    
+    Returns:
+        List of (ground_truth_seq, spec_mask) in YAML chain order
+    """
+    yaml = YAML()
+    with open(file_path, 'r') as file:
+        data = yaml.load(file)
+    
+    results = []
+    for pro in data['sequences']:
+        pro_data = pro['protein']
+        gt_seq = pro_data.get('ground_truth', '')
+        spec_mask = pro_data.get('spec_mask', '')
+        # Only include antibody chains (those with ground_truth and spec_mask)
+        if gt_seq and spec_mask:
+            results.append((gt_seq, spec_mask))
+    
+    return results
+
+
 def parse_list(data_dir):
     input_fname_pattern = '\.pdb$'
     relax_fname_pattern = '\_relaxed.pdb$'
@@ -216,13 +240,13 @@ def get_boltz_files_list(data_dir, suffix="_relaxed.pdb"):
 def parse_antibmpnn_fasta(fasta_path):
     """
     Parse AntiBMPNN output FASTA file.
-    Returns: (pdb_name, gt_heavy, gt_light, list of (pred_heavy, pred_light, seq_recovery))
+    Returns: (pdb_name, list of (pred_seqs_list, seq_recovery))
+             pred_seqs_list is split by '/' (e.g., [heavy_seq, light_seq])
     """
     with open(fasta_path, 'r') as f:
         lines = f.readlines()
     
     pdb_name = None
-    gt_heavy, gt_light = None, None
     predictions = []
     
     i = 0
@@ -231,14 +255,13 @@ def parse_antibmpnn_fasta(fasta_path):
         if line.startswith('>'):
             # Parse header
             if pdb_name is None:
-                # First header is ground truth
+                # First header contains pdb_name
                 # Format: >8r9y_H_L_A, score=2.4788, ...
                 pdb_name = line.split(',')[0][1:]  # Remove '>' and get name
                 i += 1
-                seq_line = lines[i].strip()
-                parts = seq_line.split('/')
-                gt_heavy = parts[0] if len(parts) > 0 else ''
-                gt_light = parts[1] if len(parts) > 1 else ''
+                # Skip the first sequence line (it's from model input, not ground truth)
+                i += 1
+                continue
             else:
                 # Subsequent headers are predictions
                 # Format: >T=0.1, sample=1, score=0.4146, global_score=1.0845, seq_recovery=0.3846
@@ -250,13 +273,11 @@ def parse_antibmpnn_fasta(fasta_path):
                         break
                 i += 1
                 seq_line = lines[i].strip()
-                parts = seq_line.split('/')
-                pred_heavy = parts[0] if len(parts) > 0 else ''
-                pred_light = parts[1] if len(parts) > 1 else ''
-                predictions.append((pred_heavy, pred_light, seq_recovery))
+                pred_seqs = seq_line.split('/')
+                predictions.append((pred_seqs, seq_recovery))
         i += 1
     
-    return pdb_name, gt_heavy, gt_light, predictions
+    return pdb_name, predictions
 
 
 def get_antibmpnn_files_list(data_dir):
@@ -322,8 +343,9 @@ def calc_seq_aar(gt_seq, pred_seq, cdr_def, scheme='chothia'):
 def antibmpnn_eval_aar(fasta_path, pdb_name, reference_data, args):
     """
     Evaluate AAR for AntiBMPNN output.
+    Ground truth comes from YAML, predictions come from FASTA.
     """
-    _, gt_heavy, gt_light, predictions = parse_antibmpnn_fasta(fasta_path)
+    _, predictions = parse_antibmpnn_fasta(fasta_path)
     
     if pdb_name not in reference_data:
         print(f"Warning: {pdb_name} not in reference_data")
@@ -331,11 +353,12 @@ def antibmpnn_eval_aar(fasta_path, pdb_name, reference_data, args):
     
     ref_data = reference_data[pdb_name]
     cdr_def = ref_data['cdr_def']
+    gt_seqs = ref_data['gt_seqs']  # List of ground truth sequences in chain order
+    gt_seq = ''.join(gt_seqs)
     
     results = []
-    for pred_heavy, pred_light, seq_recovery in predictions:
-        gt_seq = gt_heavy + gt_light
-        pred_seq = pred_heavy + pred_light
+    for pred_seqs_list, seq_recovery in predictions:
+        pred_seq = ''.join(pred_seqs_list)
         
         if len(gt_seq) != len(pred_seq) or len(gt_seq) != len(cdr_def):
             continue
@@ -394,23 +417,44 @@ def main(args):
 
     # Build reference_data
     if args.model == 'antibmpnn':
-        # For antibmpnn, build reference_data from YAML files only (ground truth is in FASTA)
+        # For antibmpnn, build reference_data from YAML files (ground truth is in YAML)
         for fasta_path, pdb_name in zip(predict_pdb_fpath_list, pred_pdb_name_list):
             if pdb_name in reference_data:
                 continue
-            code, heavy_chain_id, light_chain_id, antigen_chain = pdb_name.split('_')
             yaml_fpath = os.path.join(args.test_yaml_dir, f'{pdb_name}.yaml')
             if not os.path.exists(yaml_fpath):
                 print(f"Warning: YAML file not found: {yaml_fpath}")
                 continue
-            # Parse FASTA to get ground truth sequences for length
-            _, gt_heavy, gt_light, _ = parse_antibmpnn_fasta(fasta_path)
-            heavy_cdr_mask, light_cdr_mask = read_yaml_file(yaml_fpath, heavy_chain_id, light_chain_id)
-            cdr_def, _, _ = boltz_cdr_numbering(gt_heavy, gt_light, heavy_cdr_mask, light_cdr_mask)
+            # Read ground truth and spec_mask from YAML (chain order matches FASTA output)
+            chain_data = read_yaml_for_antibmpnn(yaml_fpath)
+            if len(chain_data) < 2:
+                print(f"Warning: Not enough chains in YAML: {yaml_fpath}")
+                continue
+            
+            gt_seqs = [gt for gt, _ in chain_data]
+            spec_masks = [mask for _, mask in chain_data]
+            
+            # Build cdr_def from spec_masks
+            cdr_defs = []
+            for i, (gt, mask) in enumerate(chain_data):
+                chain_type = 'H' if i == 0 else 'L'
+                N = len(mask)
+                region_def = np.full((N,), -1)
+                last_value = None
+                current_idx = -1
+                for j in range(len(mask)):
+                    if mask[j] != last_value:
+                        current_idx += 1
+                    region_def[j] = current_idx
+                    last_value = mask[j]
+                if chain_type == 'L':
+                    region_def = 7 + region_def
+                cdr_defs.append(region_def)
+            
+            cdr_def = np.concatenate(cdr_defs, axis=0)
             data = {
                 'cdr_def': cdr_def,
-                'heavy_str': gt_heavy,
-                'light_str': gt_light,
+                'gt_seqs': gt_seqs,
             }
             reference_data[pdb_name] = data
     else:
