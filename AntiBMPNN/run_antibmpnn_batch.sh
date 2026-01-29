@@ -1,4 +1,15 @@
 #!/bin/bash
+#SBATCH --job-name=fold
+#SBATCH --output=logs/fold.log
+#SBATCH --chdir=/hai/scratch/fangwu97/mfdesign/AntiBMPNN
+#SBATCH --cpus-per-task=4        # Number of CPU cores per task
+#SBATCH --mem=100G                # Total memory per node (or job), e.g. 16G, 3200M
+#SBATCH --time=1-00:00:00       # 3 days
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --account=yejin
+
 #
 # Batch script for running AntiBMPNN on predicted structures
 #
@@ -21,8 +32,8 @@ THEME=$(date +"%m%d")_"batch_design"
 
 # AntiBMPNN parameters
 MODEL_NAME="antibmpnn_000"
-NUM_SEQ_PER_TARGET=10
-SAMPLING_TEMP="0.1"
+NUM_SEQ_PER_TARGET=100
+SAMPLING_TEMP="0.2"
 BATCH_SIZE=10
 BACKBONE_NOISE=0
 
@@ -62,6 +73,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --batch_size)
             BATCH_SIZE="$2"
+            shift 2
+            ;;
+        --backbone_noise)
+            BACKBONE_NOISE="$2"
             shift 2
             ;;
         --relaxed)
