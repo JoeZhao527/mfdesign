@@ -150,7 +150,15 @@ def main():
     all_cdrs = set()
     for r in all_results:
         all_cdrs.update(k for k in r.keys() if k != 'name')
-    cdr_cols = sorted(all_cdrs, key=lambda x: (x[0], int(x[1:])))  # H1,H2,H3,L1,L2,L3
+    
+    def sort_key(x):
+        # H1, H2, H3, H3_Loop, L1, L2, L3
+        if '_' in x:  # H3_Loop
+            base, suffix = x.split('_', 1)
+            return (base[0], int(base[1:]), suffix)
+        return (x[0], int(x[1:]), '')
+    
+    cdr_cols = sorted(all_cdrs, key=sort_key)
     
     # 打印表头
     header = ['name'] + cdr_cols
