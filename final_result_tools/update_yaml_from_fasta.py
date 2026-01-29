@@ -45,6 +45,7 @@ def parse_yaml_name(yaml_name):
     解析yaml文件名，获取抗体链和抗原链ID。
     例如: 8r9y_B_C_A.yaml -> antibody=['B','C'], antigen=['A']
          9bu8_C_D_AB.yaml -> antibody=['C','D'], antigen=['A','B']
+         8zes_E__D.yaml -> antibody=['E'], antigen=['D'] (双下划线表示只有一条抗体链)
     """
     name = yaml_name.replace('.yaml', '')
     parts = name.split('_')
@@ -55,8 +56,9 @@ def parse_yaml_name(yaml_name):
     antigen_part = chain_parts[-1]
     antibody_parts = chain_parts[:-1]
     
+    # 过滤空字符串（处理双下划线情况如 8zes_E__D）
+    antibody_chains = [c for c in antibody_parts if c]
     antigen_chains = list(antigen_part)
-    antibody_chains = antibody_parts
     
     return antibody_chains, antigen_chains
 
@@ -99,7 +101,7 @@ def main():
         
         # 分割序列（用/分隔）
         seqs = best_sample['sequence'].split('/')
-        assert len(seqs) == len(antibody_chains), \
+        assert len(seqs) == len(antibody_chains) + 1, \
             f'{fasta_file.name}: 序列数量({len(seqs)})与抗体链数量({len(antibody_chains)})不匹配'
         
         # 更新yaml
