@@ -4,10 +4,10 @@
 set -e
 
 YAML_DIR="final_result_tools/boltz_data"
-OUTPUT_BASE="./AntiBMPNN/v2_antibmpnn_output_metrics"
+OUTPUT_BASE="./AntiBMPNN/v2_antibmpnn_mfdesign_output_metrics"
 
 # Find all fasta directories using find
-for fasta_dir in $(find ./AntiBMPNN/v2_antibmpnn_output -type d -name "seqs" 2>/dev/null); do
+for fasta_dir in $(find ./AntiBMPNN/v2_antibmpnn_mfdesign_output -type d -name "seqs" 2>/dev/null); do
     
     # Structure: ./antibmpnn_output/{exp_name}/{date}_batch_design/seqs
     # Extract date_theme (e.g., 0129_batch_design)
