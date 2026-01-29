@@ -105,6 +105,7 @@ def main():
             f'{fasta_file.name}: 序列数量({len(seqs)})与抗体链数量({len(antibody_chains)})不匹配'
         
         # 更新yaml
+        skip_this = False
         for protein in data['sequences']:
             chain_id = protein['protein']['id']
             
@@ -113,14 +114,19 @@ def main():
                 idx = antibody_chains.index(chain_id)
                 new_seq = seqs[idx]
                 old_seq = protein['protein']['sequence']
-                assert len(new_seq) == len(old_seq), \
-                    f'{fasta_file.name}: 链{chain_id}序列长度不匹配({len(new_seq)} vs {len(old_seq)})'
+                if len(new_seq) != len(old_seq):
+                    print(f'Warning: {fasta_file.name}: 链{chain_id}序列长度不匹配({len(new_seq)} vs {len(old_seq)}), skipping')
+                    skip_this = True
+                    break
                 protein['protein']['sequence'] = new_seq
             
             elif chain_id in antigen_chains:
                 # 抗原链的spec_mask全改成0
                 old_mask = protein['protein']['spec_mask']
                 protein['protein']['spec_mask'] = '0' * len(old_mask)
+        
+        if skip_this:
+            continue
         
         # 写入输出
         output_path = output_dir / yaml_path.name
