@@ -21,7 +21,7 @@ THEME=$(date +"%m%d")_"batch_design"
 
 # AntiBMPNN parameters
 MODEL_NAME="antibmpnn_000"
-NUM_SEQ_PER_TARGET=1000
+NUM_SEQ_PER_TARGET=10
 SAMPLING_TEMP="0.1"
 BATCH_SIZE=10
 BACKBONE_NOISE=0
