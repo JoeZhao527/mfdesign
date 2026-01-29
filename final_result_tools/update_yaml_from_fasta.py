@@ -127,7 +127,7 @@ def main():
         with open(output_path, 'w') as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
         
-        print(f'Processed: {fasta_file.name} (score={best_sample["score"]:.4f}) -> {output_path.name}')
+        # print(f'Processed: {fasta_file.name} (score={best_sample["score"]:.4f}) -> {output_path.name}')
 
 
 if __name__ == '__main__':
