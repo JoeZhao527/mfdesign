@@ -1,18 +1,20 @@
 """
-Plot dG vs AAR and dG vs RMSD scatter plots for design structures.
+Plot IMP (delta_dG) vs AAR and IMP vs RMSD scatter plots for design structures.
 
+IMP per sample = dG_gt - dG_pred (positive = improved binding over native).
 dG comes from relaxed PDBs, RMSD/AAR from unrelaxed evaluation.
 Merged on target code (PDB_Name).
 
 Reads:
   r1_eval/dg_results/{model}_dg.csv
   {DESIGN_BASE}/{model}/predictions/results.csv
+  evaluate/AbX_eval/imp_results/test_ground_binding.csv
 
 Writes:
-  r1_eval/plots/dg_vs_aar_all.png
-  r1_eval/plots/dg_vs_rmsd_all.png
-  r1_eval/plots/dg_vs_aar_{model}.png   (3 individual)
-  r1_eval/plots/dg_vs_rmsd_{model}.png  (3 individual)
+  r1_eval/plots/imp_vs_aar_all.png
+  r1_eval/plots/imp_vs_rmsd_all.png
+  r1_eval/plots/imp_vs_aar_{model}.png   (3 individual)
+  r1_eval/plots/imp_vs_rmsd_{model}.png  (3 individual)
   stdout: correlation coefficients
 """
 
@@ -24,7 +26,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy import stats
 
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DESIGN_BASE = "/hai/scratch/fangwu97/protein_data_3stages_v3/r1_exp_data/r1_design_structures"
+GT_CSV = os.path.join(PROJECT_DIR, "evaluate/AbX_eval/imp_results/test_ground_binding.csv")
 
 MODELS = [
     "gen_trial_0",
@@ -57,8 +61,8 @@ COLORS = {
 }
 
 
-def load_merged(model, script_dir):
-    """Load and merge dG with RMSD/AAR data."""
+def load_merged(model, script_dir, gt_dg):
+    """Load and merge dG with RMSD/AAR data, compute delta_dG."""
     dg_csv = os.path.join(script_dir, "dg_results", f"{model}_dg.csv")
     results_csv = os.path.join(DESIGN_BASE, model, "predictions", "results.csv")
 
@@ -70,6 +74,13 @@ def load_merged(model, script_dir):
 
     merged = results.merge(dg, left_on="code", right_on="PDB_Name", how="inner")
     merged = merged.dropna(subset=["dG"])
+
+    # Compute delta_dG = dG_gt - dG_pred (positive = improved)
+    merged["dG_gt"] = merged["code"].map(gt_dg)
+    merged = merged.dropna(subset=["dG_gt"])
+    merged["delta_dG"] = merged["dG_gt"] - merged["dG"]
+    merged["imp"] = (merged["dG"] < merged["dG_gt"]).astype(int)
+
     return merged
 
 
@@ -112,61 +123,77 @@ def main():
     plot_dir = os.path.join(script_dir, "plots")
     os.makedirs(plot_dir, exist_ok=True)
 
+    # Load ground truth dG
+    gt = pd.read_csv(GT_CSV)
+    gt_dg = dict(zip(gt["PDB_Name"], gt["dG"]))
+
     # Print header
-    print(f"{'Setting':<25} {'Metric':<12} {'Pearson r':>10} {'p':>12} {'Spearman r':>10} {'p':>12} {'N':>6}")
-    print("-" * 90)
+    print(f"{'Setting':<25} {'Metric':<16} {'Pearson r':>10} {'p':>12} {'Spearman r':>10} {'p':>12} {'N':>6}")
+    print("-" * 95)
 
     # Combined figures
     fig_aar, axes_aar = plt.subplots(1, 3, figsize=(15, 4.5))
     fig_rmsd, axes_rmsd = plt.subplots(1, 3, figsize=(15, 4.5))
-    fig_aar.suptitle("dG vs AAR (per CDR, per target)", fontsize=13)
-    fig_rmsd.suptitle("dG vs RMSD (per CDR, per target)", fontsize=13)
+    fig_aar.suptitle("IMP (delta_dG) vs AAR — positive = improved binding", fontsize=12)
+    fig_rmsd.suptitle("IMP (delta_dG) vs RMSD — positive = improved binding", fontsize=12)
 
     for idx, model in enumerate(MODELS):
         short = SHORT_NAMES[model]
-        df = load_merged(model, script_dir)
+        df = load_merged(model, script_dir, gt_dg)
         if df is None:
             print(f"  {short}: data not found, skipping")
             continue
 
-        # --- dG vs AAR ---
+        imp_rate = df["imp"].mean()
+        n_targets = len(df)
+        print(f"  {short}: {n_targets} targets, IMP rate = {imp_rate:.3f}")
+
+        # --- delta_dG vs AAR ---
         ax = axes_aar[idx]
-        all_x, all_y = scatter_plot(ax, df, "AAR", "dG", f"{short} design", "AAR", "dG (kcal/mol)")
+        all_x, all_y = scatter_plot(ax, df, "AAR", "delta_dG",
+                                    f"{short} (IMP={imp_rate:.2f})", "AAR",
+                                    "delta_dG (dG_gt - dG_pred)")
+        ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
 
-        # Individual plot
         fig_s, ax_s = plt.subplots(figsize=(6, 5))
-        scatter_plot(ax_s, df, "AAR", "dG", f"{short} design: dG vs AAR", "AAR", "dG (kcal/mol)")
+        scatter_plot(ax_s, df, "AAR", "delta_dG",
+                     f"{short}: IMP vs AAR", "AAR", "delta_dG (dG_gt - dG_pred)")
+        ax_s.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         fig_s.tight_layout()
-        fig_s.savefig(os.path.join(plot_dir, f"dg_vs_aar_{short}.png"), dpi=150)
+        fig_s.savefig(os.path.join(plot_dir, f"imp_vs_aar_{short}.png"), dpi=150)
         plt.close(fig_s)
 
         if len(all_x) > 2:
             rp, pp = stats.pearsonr(all_x, all_y)
             rs, ps = stats.spearmanr(all_x, all_y)
-            print(f"{short:<25} {'dG vs AAR':<12} {rp:>10.4f} {pp:>12.2e} {rs:>10.4f} {ps:>12.2e} {len(all_x):>6}")
+            print(f"{short:<25} {'IMP vs AAR':<16} {rp:>10.4f} {pp:>12.2e} {rs:>10.4f} {ps:>12.2e} {len(all_x):>6}")
 
-        # --- dG vs RMSD ---
+        # --- delta_dG vs RMSD ---
         ax = axes_rmsd[idx]
-        all_x, all_y = scatter_plot(ax, df, "RMSD", "dG", f"{short} design", "RMSD", "dG (kcal/mol)")
+        all_x, all_y = scatter_plot(ax, df, "RMSD", "delta_dG",
+                                    f"{short} (IMP={imp_rate:.2f})", "RMSD",
+                                    "delta_dG (dG_gt - dG_pred)")
+        ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
 
-        # Individual plot
         fig_s, ax_s = plt.subplots(figsize=(6, 5))
-        scatter_plot(ax_s, df, "RMSD", "dG", f"{short} design: dG vs RMSD", "RMSD", "dG (kcal/mol)")
+        scatter_plot(ax_s, df, "RMSD", "delta_dG",
+                     f"{short}: IMP vs RMSD", "RMSD", "delta_dG (dG_gt - dG_pred)")
+        ax_s.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         fig_s.tight_layout()
-        fig_s.savefig(os.path.join(plot_dir, f"dg_vs_rmsd_{short}.png"), dpi=150)
+        fig_s.savefig(os.path.join(plot_dir, f"imp_vs_rmsd_{short}.png"), dpi=150)
         plt.close(fig_s)
 
         if len(all_x) > 2:
             rp, pp = stats.pearsonr(all_x, all_y)
             rs, ps = stats.spearmanr(all_x, all_y)
-            print(f"{short:<25} {'dG vs RMSD':<12} {rp:>10.4f} {pp:>12.2e} {rs:>10.4f} {ps:>12.2e} {len(all_x):>6}")
+            print(f"{short:<25} {'IMP vs RMSD':<16} {rp:>10.4f} {pp:>12.2e} {rs:>10.4f} {ps:>12.2e} {len(all_x):>6}")
 
     fig_aar.tight_layout(rect=[0, 0, 1, 0.93])
-    fig_aar.savefig(os.path.join(plot_dir, "dg_vs_aar_all.png"), dpi=150)
+    fig_aar.savefig(os.path.join(plot_dir, "imp_vs_aar_all.png"), dpi=150)
     plt.close(fig_aar)
 
     fig_rmsd.tight_layout(rect=[0, 0, 1, 0.93])
-    fig_rmsd.savefig(os.path.join(plot_dir, "dg_vs_rmsd_all.png"), dpi=150)
+    fig_rmsd.savefig(os.path.join(plot_dir, "imp_vs_rmsd_all.png"), dpi=150)
     plt.close(fig_rmsd)
 
     print(f"\nPlots saved to {plot_dir}/")
