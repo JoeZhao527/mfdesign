@@ -68,6 +68,18 @@ done
 
 echo ""
 echo "======================================"
-echo "  All 6 runs complete. Failures: ${FAIL_COUNT}"
+echo "  All 6 RMSD/AAR runs complete. Failures: ${FAIL_COUNT}"
+echo "======================================"
+
+# Run TM-score evaluation
+echo ""
+echo "======================================"
+echo "  Computing TM-scores"
+echo "======================================"
+python r1_eval/cal_tmscore.py --cpus 40 || { echo "  TM-score computation FAILED"; FAIL_COUNT=$((FAIL_COUNT+1)); }
+
+echo ""
+echo "======================================"
+echo "  All evaluations complete. Failures: ${FAIL_COUNT}"
 echo "======================================"
 exit ${FAIL_COUNT}

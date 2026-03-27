@@ -7,8 +7,9 @@
 ```
 r1_eval/
 ├── convert_protenix_cif_to_pdb.py   # Step 1: CIF → PDB 转换
-├── run_all_eval.sh                  # Step 2: 运行 6 组评估
-├── collect_results.py               # Step 3: 汇总结果
+├── run_all_eval.sh                  # Step 2: 运行 6 组 RMSD/AAR 评估 + TM-score
+├── cal_tmscore.py                   # Step 2b: TM-score 计算（也可单独运行）
+├── collect_results.py               # Step 3: 汇总结果（含 TM-score）
 └── README.md
 ```
 
@@ -39,6 +40,8 @@ r1_eval/
 | 转换后 Protenix PDB | `/hai/scratch/fangwu97/protein_data_3stages_v3/r1_protenix_pdb/{model}/predictions/{ID}/{ID}_sample_0.pdb` |
 | 设计评估结果 | `/hai/scratch/fangwu97/protein_data_3stages_v3/r1_exp_data/r1_design_structures/{model}/predictions/results.csv` |
 | Protenix 评估结果 | `/hai/scratch/fangwu97/protein_data_3stages_v3/r1_protenix_pdb/{model}/predictions/results.csv` |
+| TM-score 结果 | `r1_eval/tmscore_results/{model}_{design\|protenix}_tmscore.csv` |
+| TM-score 汇总 | `r1_eval/tmscore_results/tmscore_comparison.csv` |
 | 汇总对比表 | `r1_eval/r1_comparison.csv`, `r1_eval/r1_comparison_full.csv` |
 
 ## 运行方式
@@ -100,3 +103,9 @@ mfdesign_bagel (protenix)|                 |                |     |
 - **AAR**: 氨基酸恢复率（设计序列 vs 天然序列）
 - **Loop_RMSD / Loop_AAR**: CDR3 loop 核心区域（去掉两端 flanking 残基）
 - **full_RMSD**: 全抗体 RMSD
+
+由 `cal_tmscore.py` 计算（基于 TM-align 全局结构对齐）：
+
+- **antibody_TMscore**: 抗体整体（heavy + light）TM-score，按参考结构长度归一化
+- **heavy_TMscore**: 重链 TM-score
+- **light_TMscore**: 轻链 TM-score
