@@ -110,7 +110,7 @@ This queries MSA for each chain sequence via the API (~180 queries, ~few hours w
 
 ```bash
 python scripts/process/convert_msa.py \
-    --input_dir rabd_eval/mfdesign_input/msa/ \
+    --input_dir rabd_eval/mfdesign_input/msa/boltz_results_yamls/msa/ \
     --output_dir rabd_eval/mfdesign_input/msa_npz/ \
     --preprocessed_data_path rabd_eval/mfdesign_input/summary.json \
     --msa_filtering_threshold 0.2
