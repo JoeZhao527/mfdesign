@@ -356,7 +356,9 @@ def process_inputs(  # noqa: C901, PLR0912, PLR0915
     # Parse input data
     records: list[Record] = []
     chain_infos = {}
+    failed = []
     for path in tqdm(data):
+      try:
         # Parse data
         if path.suffix in (".fa", ".fas", ".fasta"):
             target = parse_fasta(path, ccd)
@@ -468,6 +470,16 @@ def process_inputs(  # noqa: C901, PLR0912, PLR0915
         # Dump structure
         struct_path = structure_dir / f"{target.record.id}.npz"
         target.structure.dump(struct_path)
+
+      except Exception as e:
+        failed.append((path.name, str(e)))
+        click.echo(f"[WARN] Skipping {path.name}: {e}")
+        continue
+
+    if failed:
+        click.echo(f"\n[WARN] {len(failed)} entries failed:")
+        for name, err in failed:
+            click.echo(f"  - {name}: {err}")
 
     if only_process_msa:
         return

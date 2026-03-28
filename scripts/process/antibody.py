@@ -4,8 +4,8 @@ import multiprocessing
 import pickle
 import traceback
 
-import sys
-sys.path.insert(0, '/mnt/nas-new/home/yangnianzu/icml/boltz/src/')
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../src'))
 
 from dataclasses import asdict, dataclass, replace
 from functools import partial
@@ -218,8 +218,7 @@ def finalize(outdir: Path) -> None:
 
     failed_count = 0
     records = []
-    for record in records_dir.iterdir():
-        path = records_dir / record
+    for path in records_dir.iterdir():
         try:
             with path.open("r") as f:
                 records.append(json.load(f))
