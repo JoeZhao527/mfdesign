@@ -8,7 +8,8 @@
 r1_eval/
 ├── convert_protenix_cif_to_pdb.py   # Step 1: CIF → PDB 转换
 ├── run_all_eval.sh                  # Step 2: 运行 6 组 RMSD/AAR 评估 + TM-score
-├── cal_tmscore.py                   # Step 2b: TM-score 计算（也可单独运行）
+├── cal_tmscore.py                   # Step 2b: 整链 TM-score 计算（也可单独运行）
+├── cal_cdr_tmscore.py               # Step 2c: Per-CDR TM-score 计算
 ├── collect_results.py               # Step 3: 汇总结果（含 TM-score）
 └── README.md
 ```
@@ -109,3 +110,27 @@ mfdesign_bagel (protenix)|                 |                |     |
 - **antibody_TMscore**: 抗体整体（heavy + light）TM-score，按参考结构长度归一化
 - **heavy_TMscore**: 重链 TM-score
 - **light_TMscore**: 轻链 TM-score
+
+由 `cal_cdr_tmscore.py` 计算（基于 TM-align 局部区域对齐）：
+
+- **heavy_cdr{1,2,3}_TMscore / light_cdr{1,2,3}_TMscore**: 各 CDR 区域的 TM-score
+- **heavy_cdr3_loop_TMscore**: CDR3 loop 核心区域 TM-score（IMGT: 去掉前4后2 flanking 残基）
+
+### cal_cdr_tmscore.py
+
+独立脚本，计算整链 + per-CDR TM-score。通过 YAML spec_mask 确定 CDR 区域，无需依赖 PyRosetta。
+
+```bash
+python r1_eval/cal_cdr_tmscore.py \
+    --pred_dir  r1_abl/inference_outputs/rabd_h3_only_trial0/predictions \
+    --ref_dir   r1_abl/mfdesign_rabd_npz/reference_pdbs \
+    --yaml_dir  r1_abl/mfdesign_rabd_npz/test_yaml_dir/h3_only \
+    --target_json r1_abl/mfdesign_rabd_npz/rabd_split.json \
+    --suffix _model_0.pdb \
+    --cpus 40 \
+    --out output.csv
+```
+
+参数说明：
+- `--boltz_chains`（默认）: 预测结构使用 boltz 链命名（A=heavy, B=light）
+- `--original_chains`: 预测结构使用原始链 ID（从文件名解析）
