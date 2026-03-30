@@ -112,7 +112,7 @@ def scatter_plot(ax, df, x_col_suffix, y_col, title, xlabel, ylabel):
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.set_title(title, fontsize=10)
+    # ax.set_title(title, fontsize=10)
     ax.legend(fontsize=6, loc="best", markerscale=1.5)
 
     return all_x, all_y
@@ -152,12 +152,12 @@ def main():
         ax = axes_aar[idx]
         all_x, all_y = scatter_plot(ax, df, "AAR", "delta_dG",
                                     f"{short} (IMP={imp_rate:.2f})", "AAR",
-                                    "delta_dG (dG_gt - dG_pred)")
+                                    "delta_dG")
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
 
         fig_s, ax_s = plt.subplots(figsize=(6, 5))
         scatter_plot(ax_s, df, "AAR", "delta_dG",
-                     f"{short}: IMP vs AAR", "AAR", "delta_dG (dG_gt - dG_pred)")
+                     f"{short}: IMP vs AAR", "AAR", "delta_dG")
         ax_s.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         fig_s.tight_layout()
         fig_s.savefig(os.path.join(plot_dir, f"imp_vs_aar_{short}.png"), dpi=150)
@@ -172,12 +172,12 @@ def main():
         ax = axes_rmsd[idx]
         all_x, all_y = scatter_plot(ax, df, "RMSD", "delta_dG",
                                     f"{short} (IMP={imp_rate:.2f})", "RMSD",
-                                    "delta_dG (dG_gt - dG_pred)")
+                                    "delta_dG")
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
 
         fig_s, ax_s = plt.subplots(figsize=(6, 5))
         scatter_plot(ax_s, df, "RMSD", "delta_dG",
-                     f"{short}: IMP vs RMSD", "RMSD", "delta_dG (dG_gt - dG_pred)")
+                     f"{short}: IMP vs RMSD", "RMSD", "delta_dG")
         ax_s.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         fig_s.tight_layout()
         fig_s.savefig(os.path.join(plot_dir, f"imp_vs_rmsd_{short}.png"), dpi=150)
