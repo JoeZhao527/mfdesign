@@ -90,7 +90,7 @@ def plot_single_setting(df, title, ax):
 
     ax.set_xlabel("AAR")
     ax.set_ylabel("RMSD")
-    ax.set_title(title, fontsize=10)
+    # ax.set_title(title, fontsize=10)
     ax.legend(fontsize=6, loc="upper right", markerscale=1.5)
 
     return corr_text
